@@ -29,6 +29,7 @@ setup:
 
 clean-data:
 	$(PYTHON_ENV) py-core/create_dataframe_from_docs.py
+	$(PYTHON_ENV) py-core/build_ML_matrix.py
 	
 
 # you can run make run --query 'mining water'
