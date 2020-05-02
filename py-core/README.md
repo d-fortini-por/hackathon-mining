@@ -1,7 +1,11 @@
 1. Extract the zip file manually to data/raw/unzipped
 
-2. To process data `python   create_dataframe_from_docs.py`
-
+2. To setup python env
+```
+make setup
+make clean-data
+```
+3. Call engine with `make run query="water"`
 
 
 
