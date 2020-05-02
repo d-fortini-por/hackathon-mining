@@ -27,10 +27,12 @@ const defaultMap = {
 };
 
 export default class SearchComponent extends Component {
+  // Initialize state in constructor,
+  // Or with a property initializer.
   state = initialState;
 
-  componentDidMount() {
-    this._loadAsyncData();
+  static getDerivedStateFromProps(props, state) {
+    return state;
   }
 
   handleResultSelect = (e, { result }) =>
@@ -38,19 +40,49 @@ export default class SearchComponent extends Component {
 
   handleSearchChange = (e, { value }) => {
     this.setState({ isLoading: true, value });
+    return this.search(value);
+    // setTimeout(() => {
+    //   if (this.state.value.length < 1) return this.setState(initialState);
 
-    setTimeout(() => {
-      if (this.state.value.length < 1) return this.setState(initialState);
+    //   const re = new RegExp(_.escapeRegExp(this.state.value), "i");
+    //   const isMatch = result => re.test(result.title);
 
-      const re = new RegExp(_.escapeRegExp(this.state.value), "i");
-      const isMatch = result => re.test(result.title);
-
-      this.setState({
-        isLoading: false,
-        results: _.filter(source, isMatch)
-      });
-    }, 300);
+    //   this.setState({
+    //     isLoading: false,
+    //     results: _.filter(source, isMatch)
+    //   });
+    // }, 300);
   };
+
+  async search(value = null) {
+    if (value === "") {
+      this.setState({ results: [] });
+      return;
+    }
+
+    let response;
+    try {
+      response = await fetch(`http://localhost:5000/search?query=${value}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+    } catch (error) {
+      console.log("failed to GET stats:", error);
+      return;
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (error) {
+      console.log("failed to parse response as JSON:", error);
+      return;
+    }
+
+    this.setState({ results: data });
+  }
 
   render() {
     const { isLoading, value, results } = this.state;
@@ -71,17 +103,6 @@ export default class SearchComponent extends Component {
               value={value}
               {...this.props}
             />
-
-            {/* <Search
-                loading={isLoading}
-                onResultSelect={this.handleResultSelect}
-                onSearchChange={_.debounce(this.handleSearchChange, 500, {
-                  leading: true
-                })}
-                results={results}
-                value={value}
-                {...this.props}
-              /> */}
             <Divider />
             <Container style={{ width: "100%", height: "400px" }}>
               <GoogleMapReact
@@ -114,9 +135,5 @@ export default class SearchComponent extends Component {
         </Grid>
       </Container>
     );
-  }
-
-  _loadAsyncData() {
-    return {};
   }
 }
