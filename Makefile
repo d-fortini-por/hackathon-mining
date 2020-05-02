@@ -37,5 +37,4 @@ run: py-core/main-search-engine.py
 	$(PYTHON_ENV) py-core/main-search-engine.py --query ${query} 
 
 server:
-	cd py-core; export FLASK_APP='app.py'
-	$(FLASK) run
+	cd py-core; export FLASK_APP='app.py' ; $(FLASK) run
