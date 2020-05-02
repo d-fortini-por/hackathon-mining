@@ -5,7 +5,11 @@
 make setup
 make clean-data
 ```
-3. Call engine with `make run query="water"`
+3. Call engine with 
+```
+1. 'make run query="water"'
+2. 'pipenv run python py-core/main-search-engine.py --query "water"'
+```
 
 
 
