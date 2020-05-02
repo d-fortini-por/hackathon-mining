@@ -23,8 +23,7 @@ PY_SHELL := pipenv shell
 setup:
 	$(PYTHON_INTERPRETER) -m pip install  --upgrade pip
 	$(PYTHON_INTERPRETER) -m pip install  pipenv
-	cd py-core
-	pipenv install -r requirements.txt
+	cd py-core ; pipenv install -r requirements.txt
 	
 
 clean-data:
