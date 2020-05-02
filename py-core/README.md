@@ -48,13 +48,5 @@ In case of no results, the response will be
 
 ## App
 ```
-# listens on port 5000
-cd py-core
-export FLASK_APP=app.py
-pipenv run flask run 
-```
-
-```
-# URL with query example http://127.0.0.1:5000/query=water
-@app.route("/<query>", methods=["GET"])
+make server
 ```
