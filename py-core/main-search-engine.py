@@ -9,9 +9,10 @@ args = parser.parse_args()
 if __name__ == "__main__":
     
     search_term = args.query
-    print(f'search term is {search_term}')
+    #print(f'search term is {search_term}')
     output = make_inference(search_term)
-    print(json.JSONEncoder().encode(output))
+    #print(output)
+    #print(json.JSONEncoder().encode(output))
         
     
     

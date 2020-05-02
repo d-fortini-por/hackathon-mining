@@ -15,6 +15,7 @@ PYTHON_ENV := pipenv run python
 PYTEST := pipenv run pytest
 LINTER := pipenv run flake8
 PY_SHELL := pipenv shell
+FLASK := pipenv run flask
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -35,3 +36,6 @@ clean-data:
 run: py-core/main-search-engine.py
 	$(PYTHON_ENV) py-core/main-search-engine.py --query ${query} 
 
+server:
+	cd py-core; export FLASK_APP='app.py'
+	$(FLASK) run
