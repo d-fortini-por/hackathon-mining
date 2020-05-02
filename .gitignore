@@ -1,3 +1,5 @@
 *.zip
 data/raw/*
 data/processed/*
+__pycache__/
+src/__pycache/
