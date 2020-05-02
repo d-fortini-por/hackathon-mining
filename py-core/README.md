@@ -45,3 +45,8 @@ In case of no results, the response will be
 
 ```
 
+
+## App
+```
+make server
+```
