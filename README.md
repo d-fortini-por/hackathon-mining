@@ -2,8 +2,8 @@
 
 ## Python Mining Core Part
 
-py-Core/README.md
+[py-core](py-core/README.md)
 
 ## Search mining UI Part
 
-search-mining-ui/README.md
+[search-mining-ui](search-mining-ui/README.md)
