@@ -7,15 +7,20 @@ import {
   Segment,
   Search,
   Header,
-  Container
+  Container,
+  Icon
 } from "semantic-ui-react";
 import GoogleMapReact from "google-map-react";
 
 const initialState = { isLoading: false, results: [], value: "" };
+const API_SEARCH =
+  "https://n55bunkzgh.execute-api.eu-west-1.amazonaws.com/prod/v1";
+const API_SEARCH_PARAM = "search";
 const source = _.times(5, () => ({
-  title: faker.name.title(),
-  description: faker.name.jobDescriptor(),
-  image: faker.internet.avatar()
+  document_name: faker.system.fileName(),
+  document_path: faker.system.filePath(),
+  document_type: faker.system.commonFileExt(),
+  ranking_score: faker.random.number()
 }));
 const AnyReactComponent = ({ text }) => <div>{text}</div>;
 const defaultMap = {
@@ -25,6 +30,31 @@ const defaultMap = {
   },
   zoom: 11
 };
+
+const resultRenderer = ({
+  document_name,
+  document_path,
+  document_type,
+  ranking_score
+}) => (
+  <div class="ui relaxed divided list">
+    <div class="item">
+      <Icon
+        name={`file ${
+          document_type === "doc" || document_type === "docx" ? "word" : `pdf`
+        } outline icon`}
+        size="big"
+      />
+      <div class="content">
+        <a class="header">{document_name}</a>
+        <div class="description">{document_path}</div>
+        <div class="description">
+          <Icon name="chart line" size="large" /> Ranking score: {ranking_score}
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export default class SearchComponent extends Component {
   // Initialize state in constructor,
@@ -40,18 +70,18 @@ export default class SearchComponent extends Component {
 
   handleSearchChange = (e, { value }) => {
     this.setState({ isLoading: true, value });
-    return this.search(value);
-    // setTimeout(() => {
-    //   if (this.state.value.length < 1) return this.setState(initialState);
+    setTimeout(() => {
+      if (this.state.value.length < 1) return this.setState(initialState);
 
-    //   const re = new RegExp(_.escapeRegExp(this.state.value), "i");
-    //   const isMatch = result => re.test(result.title);
+      //const re = new RegExp(_.escapeRegExp(this.state.value), "i");
+      //const isMatch = result => re.test(result.document_name);
+      const isMatch = this.search(value);
 
-    //   this.setState({
-    //     isLoading: false,
-    //     results: _.filter(source, isMatch)
-    //   });
-    // }, 300);
+      this.setState({
+        isLoading: false,
+        results: this.search(value)
+      });
+    }, 300);
   };
 
   async search(value = null) {
@@ -62,7 +92,7 @@ export default class SearchComponent extends Component {
 
     let response;
     try {
-      response = await fetch(`http://localhost:5000/search?query=${value}`, {
+      response = await fetch(`${API_SEARCH}?${API_SEARCH_PARAM}=${value}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -100,12 +130,13 @@ export default class SearchComponent extends Component {
                 leading: true
               })}
               results={results}
+              resultRenderer={resultRenderer}
               value={value}
               {...this.props}
             />
             <Divider />
             <Container style={{ width: "100%", height: "400px" }}>
-              <GoogleMapReact
+              {/* <GoogleMapReact
                 bootstrapURLKeys={{
                   key: "AIzaSyDBCUAspjbDGyD-AA8sVQuUukeHr8YEUpQ"
                 }}
@@ -117,7 +148,7 @@ export default class SearchComponent extends Component {
                   lng={30.337844}
                   text="My Marker"
                 />
-              </GoogleMapReact>
+              </GoogleMapReact> */}
             </Container>
           </Grid.Column>
           <Grid.Column>
@@ -125,10 +156,6 @@ export default class SearchComponent extends Component {
               <Header>State</Header>
               <pre style={{ overflowX: "auto" }}>
                 {JSON.stringify(this.state, null, 2)}
-              </pre>
-              <Header>Data Srource</Header>
-              <pre style={{ overflowX: "auto" }}>
-                {JSON.stringify(source, null, 2)}
               </pre>
             </Segment>
           </Grid.Column>
