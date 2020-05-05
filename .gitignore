@@ -27,3 +27,6 @@ py-core/__pycache__/
 py-core/src/__pycache/
 py-core/data/raw/*
 py-core/data/processed/*
+
+# Local Netlify folder
+.netlify
