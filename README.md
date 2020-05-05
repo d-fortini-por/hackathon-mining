@@ -7,3 +7,5 @@
 ## Search mining UI Part
 
 [search-mining-ui](search-mining-ui/README.md)
+
+demo: https://hackathon-search-mining-ai.netlify.app/
