@@ -1,0 +1,9 @@
+[build]
+  command = "cd search-mining-ui && yarn build"
+  publish="build"
+  base = "search-mining-ui/"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
