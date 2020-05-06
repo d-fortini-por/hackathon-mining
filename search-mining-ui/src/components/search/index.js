@@ -1,166 +1,150 @@
-import _ from "lodash";
-import faker from "faker";
-import React, { Component } from "react";
+import { useAsyncAbortable } from "react-async-hook";
+
+import * as React from "react";
+import { useState } from "react";
+import useConstant from "use-constant";
+import AwesomeDebouncePromise from "awesome-debounce-promise";
 import {
   Divider,
   Grid,
   Segment,
-  Search,
   Header,
   Container,
   Icon
 } from "semantic-ui-react";
-import GoogleMapReact from "google-map-react";
 
-const initialState = { isLoading: false, results: [], value: "" };
 const API_SEARCH =
   "https://n55bunkzgh.execute-api.eu-west-1.amazonaws.com/prod/v1";
 const API_SEARCH_PARAM = "search";
-const source = _.times(5, () => ({
-  document_name: faker.system.fileName(),
-  document_path: faker.system.filePath(),
-  document_type: faker.system.commonFileExt(),
-  ranking_score: faker.random.number()
-}));
-const AnyReactComponent = ({ text }) => <div>{text}</div>;
-const defaultMap = {
-  center: {
-    lat: 50.9375,
-    lng: 6.9603
-  },
-  zoom: 11
+
+const searchEnginAPI = async (text, abortSignal) => {
+  const result = await fetch(
+    `${API_SEARCH}?${API_SEARCH_PARAM}=${encodeURIComponent(text)}`,
+    {
+      signal: abortSignal
+    }
+  );
+  if (result.status !== 200) {
+    throw new Error("bad status = " + result.status);
+  }
+  const response = await result.json();
+  const responseCorrection = JSON.stringify(response).replace(
+    /ranking score/g,
+    "ranking_score"
+  );
+  return JSON.parse(responseCorrection).results;
 };
 
-const resultRenderer = ({
-  document_name,
-  document_path,
-  document_type,
-  ranking_score
-}) => (
-  <div class="ui relaxed divided list">
-    <div class="item">
-      <Icon
-        name={`file ${
-          document_type === "doc" || document_type === "docx" ? "word" : `pdf`
-        } outline icon`}
-        size="big"
-      />
-      <div class="content">
-        <a class="header">{document_name}</a>
-        <div class="description">{document_path}</div>
-        <div class="description">
-          <Icon name="chart line" size="large" /> Ranking score: {ranking_score}
-        </div>
-      </div>
-    </div>
-  </div>
-);
+const useSearchEngin = () => {
+  // Handle the input text state
+  const [inputText, setInputText] = useState("");
 
-export default class SearchComponent extends Component {
-  // Initialize state in constructor,
-  // Or with a property initializer.
-  state = initialState;
+  // Debounce the original search async function
+  const debouncedSearchEnginCall = useConstant(() =>
+    AwesomeDebouncePromise(searchEnginAPI, 300)
+  );
 
-  static getDerivedStateFromProps(props, state) {
-    return state;
-  }
+  const search = useAsyncAbortable(
+    async (abortSignal, text) => {
+      // If the input is empty, return nothing immediately (without the debouncing delay!)
+      if (text.length === 0) {
+        return [];
+      }
+      // Else we use the debounced api
+      else {
+        return debouncedSearchEnginCall(text, abortSignal);
+      }
+    },
+    // Ensure a new request is made everytime the text changes (even if it's debounced)
+    [inputText]
+  );
 
-  handleResultSelect = (e, { result }) =>
-    this.setState({ value: result.title });
-
-  handleSearchChange = (e, { value }) => {
-    this.setState({ isLoading: true, value });
-    setTimeout(() => {
-      if (this.state.value.length < 1) return this.setState(initialState);
-
-      //const re = new RegExp(_.escapeRegExp(this.state.value), "i");
-      //const isMatch = result => re.test(result.document_name);
-      const isMatch = this.search(value);
-
-      this.setState({
-        isLoading: false,
-        results: this.search(value)
-      });
-    }, 300);
+  // Return everything needed for the hook consumer
+  return {
+    inputText,
+    setInputText,
+    search
   };
+};
 
-  async search(value = null) {
-    if (value === "") {
-      this.setState({ results: [] });
-      return;
-    }
-
-    let response;
-    try {
-      response = await fetch(`${API_SEARCH}?${API_SEARCH_PARAM}=${value}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-    } catch (error) {
-      console.log("failed to GET stats:", error);
-      return;
-    }
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (error) {
-      console.log("failed to parse response as JSON:", error);
-      return;
-    }
-
-    this.setState({ results: data });
-  }
-
-  render() {
-    const { isLoading, value, results } = this.state;
-
-    return (
-      <Container textAlign="justified">
-        <Grid columns={2}>
-          <Grid.Column>
+const SearchMining = () => {
+  const { inputText, setInputText, search } = useSearchEngin();
+  return (
+    <Container textAlign="justified">
+      <Divider />
+      <input
+        value={inputText}
+        onChange={e => setInputText(e.target.value)}
+        placeholder="Search mining"
+        style={{
+          marginTop: 20,
+          padding: 10,
+          border: "solid thin",
+          borderRadius: 5,
+          width: 300
+        }}
+      />
+      <Divider />
+      <Grid>
+        <Grid.Column>
+          <Segment>
+            <div className="ui stacked segment">
+              <p>
+                Here below you see how the JavaScript code works and is
+                returning example-results from our AI-model with name, path to
+                directory, file format and ranking score. The ranking score is
+                based on a deep learning neural network, a series of algorithms.
+              </p>
+            </div>
             <Divider />
-            <Search
-              input={{ icon: "search", iconPosition: "left" }}
-              loading={isLoading}
-              onResultSelect={this.handleResultSelect}
-              onSearchChange={_.debounce(this.handleSearchChange, 500, {
-                leading: true
-              })}
-              results={results}
-              resultRenderer={resultRenderer}
-              value={value}
-              {...this.props}
-            />
-            <Divider />
-            <Container style={{ width: "100%", height: "400px" }}>
-              {/* <GoogleMapReact
-                bootstrapURLKeys={{
-                  key: "AIzaSyDBCUAspjbDGyD-AA8sVQuUukeHr8YEUpQ"
-                }}
-                defaultCenter={defaultMap.center}
-                defaultZoom={defaultMap.zoom}
-              >
-                <AnyReactComponent
-                  lat={59.955413}
-                  lng={30.337844}
-                  text="My Marker"
-                />
-              </GoogleMapReact> */}
-            </Container>
-          </Grid.Column>
-          <Grid.Column>
-            <Segment>
-              <Header>State</Header>
-              <pre style={{ overflowX: "auto" }}>
-                {JSON.stringify(this.state, null, 2)}
-              </pre>
-            </Segment>
-          </Grid.Column>
-        </Grid>
-      </Container>
-    );
-  }
-}
+            {search.loading && <div>...</div>}
+            {search.error && <div>Error: {search.error.message}</div>}
+            {search.result && (
+              <div>
+                <Header>Search Results: {search.result.length}</Header>
+                <ul>
+                  {search.result.map(
+                    ({
+                      document_name,
+                      document_path,
+                      document_type,
+                      ranking_score
+                    }) => (
+                      <li key={document_name}>
+                        <div className="ui relaxed divided list">
+                          <div className="item">
+                            <Icon
+                              name={`file ${
+                                document_type === "doc" ||
+                                document_type === "docx"
+                                  ? "word"
+                                  : `pdf`
+                              } outline`}
+                              size="big"
+                            />
+                            <div className="content">
+                              <div className="header">{document_name}</div>
+                              <div className="description">{document_path}</div>
+                              <div className="description">
+                                <Icon name="chart line" size="large" /> Ranking
+                                score: {ranking_score}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+          </Segment>
+        </Grid.Column>
+      </Grid>
+    </Container>
+  );
+};
+
+const App = () => <SearchMining />;
+
+export default App;
